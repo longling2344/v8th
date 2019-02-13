@@ -1,9 +1,5 @@
 package com.v8th.wechat;
 
-import com.soecode.wxtools.api.IService;
-import com.soecode.wxtools.api.WxConsts;
-import com.soecode.wxtools.api.WxMessageRouter;
-import com.soecode.wxtools.api.WxService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -14,11 +10,5 @@ public class WechatApplication {
         SpringApplication.run(WechatApplication.class, args);
     }
 
-    private IService iService = new WxService();
-
-    private void test(){
-        WxMessageRouter router = new WxMessageRouter(iService);
-        router.rule().msgType(WxConsts.XML_MSG_TEXT).matcher(null).handler(null).end();
-    }
 }
 
