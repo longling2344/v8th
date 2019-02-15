@@ -12,13 +12,8 @@ import com.v8th.wechat.matcher.OpenIdMatcher;
 import com.v8th.wechat.matcher.SubscribeMatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 
 import static com.v8th.wechat.consts.VConsts.*;
 
@@ -45,30 +40,31 @@ public class CallbackController {
         this.subscribeHandler = subscribeHandler;
     }
 
+    /**
+     * 校验签名
+     */
     @GetMapping
     public String check(String signature, String timestamp, String nonce, String echostr) {
+        log.info("-------into get method-----");
         boolean chkResult = iService.checkSignature(signature, timestamp, nonce, echostr);
         return chkResult ? echostr : CHKFAIL;
     }
 
     /**
-     * @param request xml
+     * @param xml xml
      * @return 参考 https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140543
-     * @throws IOException io
      */
     @PostMapping
-    public String handle(HttpServletRequest request) throws IOException {
-        request.setCharacterEncoding(UTF8);
-        // 创建一个路由器
+    @ResponseBody
+    public String execute(@RequestBody String xml){
+        log.info("-------into post method-----\n{}",xml);
         WxMessageRouter router = new WxMessageRouter(iService);
-
-        WxXmlMessage wx = XStreamTransformer.fromXml(WxXmlMessage.class, request.getInputStream());
+        WxXmlMessage wx = XStreamTransformer.fromXml(WxXmlMessage.class, xml);
         router.rule().msgType(WxConsts.XML_MSG_TEXT).matcher(openIdMatcher).handler(openIdHandler).end()
-        .rule().msgType(WxConsts.MASS_MSG_NEWS).matcher(subscribeMatcher).handler(subscribeHandler).end();
+                .rule().msgType(WxConsts.XML_MSG_EVENT).matcher(subscribeMatcher).handler(subscribeHandler).end();
 
         // 把消息传递给路由器进行处理
         WxXmlOutMessage xmlOutMsg = router.route(wx);
         return xmlOutMsg != null ? xmlOutMsg.toXml() : SUCCESS;
     }
-
 }
